@@ -23,7 +23,8 @@ var database *sql.DB
 
 type Page struct {
 	Title   string
-	Content string
+	RawContent string
+	Content template.HTML
 	Date    string
 }
 
@@ -31,7 +32,8 @@ func servePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pageGUID := vars["guid"]
 	thisPage := Page{}
-	err := database.QueryRow("SELECT page_title,page_content,page_date FROM pages WHERE page_guid=?", pageGUID).Scan(&thisPage.Title, &thisPage.Content, &thisPage.Date)
+	err := database.QueryRow("SELECT page_title,page_content,page_date FROM pages WHERE page_guid=?", pageGUID).Scan(&thisPage.Title, &thisPage.RawContent, &thisPage.Date)
+	thisPage.Content = template.HTML(thisPage.RawContent)
 	if err != nil {
 		fmt.Println("Couldn't get page:", pageGUID, err.Error())
 		http.Error(w, http.StatusText(404), http.StatusNotFound)
