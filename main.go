@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -36,8 +37,8 @@ func servePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(404), http.StatusNotFound)
 		return
 	}
-	html := `<html><head><title>` + thisPage.Title + `</title></head><body><h1>` + thisPage.Title + `</h1><div>` + thisPage.Content + `</div></body></html>`
-	fmt.Fprintln(w, html)
+	t, _ := template.ParseFiles("templates/blog.html")
+	t.Execute(w, thisPage)
 }
 
 func initDB() {
