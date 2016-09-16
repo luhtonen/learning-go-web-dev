@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"github.com/gorilla/mux"
+	"net/http"
+	"os"
 )
 
 const (
@@ -14,6 +15,11 @@ func pageHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pageID := vars["id"]
 	fileName := "files/" + pageID + ".html"
+	_, err := os.Stat(fileName)
+	if err != nil {
+		fmt.Println("error caught:", err.Error())
+		fileName = "files/404.html"
+	}
 	http.ServeFile(w, r, fileName)
 }
 
