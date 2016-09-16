@@ -4,30 +4,22 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/gorilla/mux"
-	"time"
 )
 
 const (
 	Port = ":8080"
 )
 
-func serveDynamic(w http.ResponseWriter, r *http.Request) {
-	response := "The time is now " + time.Now().String()
-	fmt.Fprintln(w, response)
-}
-
-func serveStatic(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "static.html")
-}
-
-func TestHandler(w http.ResponseWriter, r *http.Request) {
+func pageHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pageID := vars["id"]
+	fileName := "files/" + pageID + ".html"
+	http.ServeFile(w, r, fileName)
 }
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/test", TestHandler)
-	router.HandleFunc("/", serveDynamic)
-	router.HandleFunc("/static", serveStatic)
+	router.HandleFunc("/pages/{id:[0-9]+}", pageHandler)
 	http.Handle("/", router)
 	fmt.Println("Listening on port", Port)
 	http.ListenAndServe(Port, nil)
