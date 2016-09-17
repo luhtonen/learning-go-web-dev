@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -115,6 +116,11 @@ func main() {
 	routes.HandleFunc("/", redirIndex)
 	routes.HandleFunc("/home", serveIndex)
 	http.Handle("/", routes)
+	certificates, err := tls.LoadX509KeyPair("server.pem", "server.key")
+	if err != nil {
+		log.Fatalln("Cannot load certificates:", err.Error())
+	}
+	tlsConfig := tls.Config{Certificates: []tls.Certificate{certificates}}
 	log.Println("Listening on port", Port)
-	http.ListenAndServe(Port, nil)
+	tls.Listen("tcp", Port, &tlsConfig)
 }
