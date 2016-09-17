@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -83,13 +84,37 @@ func serveIndex(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, Pages)
 }
 
+func apiPage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pageGUID := vars["guid"]
+	var thisPage Page
+	err := database.QueryRow("SELECT page_title,page_content,page_date FROM pages WHERE page_guid=?", pageGUID).Scan(&thisPage.Title, &thisPage.RawContent, &thisPage.Date)
+	thisPage.Content = template.HTML(thisPage.RawContent)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, http.StatusText(404), http.StatusNotFound)
+		return
+	}
+	_, err = json.Marshal(thisPage)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintln(w, thisPage)
+}
+
 func main() {
 	initDB()
-	router := mux.NewRouter()
-	router.HandleFunc("/page/{guid:[0-9a-zA\\-]+}", servePage)
-	router.HandleFunc("/", redirIndex)
-	router.HandleFunc("/home", serveIndex)
-	http.Handle("/", router)
+	routes := mux.NewRouter()
+	routes.HandleFunc("/api/pages", apiPage).Methods("GET").Schemes("https")
+	//routes.HandleFunc("/api/pages/{guid:[0-9a-zA\\-]+}", apiPage).Methods("GET").Schemes("https")
+	routes.HandleFunc("/api/pages/{guid:[0-9a-zA\\-]+}", apiPage).Methods("GET")
+	routes.HandleFunc("/page/{guid:[0-9a-zA\\-]+}", servePage)
+	routes.HandleFunc("/", redirIndex)
+	routes.HandleFunc("/home", serveIndex)
+	http.Handle("/", routes)
 	log.Println("Listening on port", Port)
 	http.ListenAndServe(Port, nil)
 }
