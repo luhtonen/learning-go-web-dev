@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -36,6 +37,10 @@ func (p Page) TruncatedText() template.HTML {
 		return p.Content[:150] + ` ...`
 	}
 	return p.Content
+}
+
+type JSONResponse struct {
+	Fields map[string]string
 }
 
 func servePage(w http.ResponseWriter, r *http.Request) {
@@ -106,11 +111,45 @@ func apiPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, thisPage)
 }
 
+func apiCommentPost(w http.ResponseWriter, r *http.Request) {
+	var commentAdded bool
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+	comments := r.FormValue("comments")
+
+	res, err := database.Exec("INSERT INTO comments SET comment_name=?, comment_email=?, comment_text=?", name, email, comments)
+
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		commentAdded = false
+	} else {
+		commentAdded = true
+	}
+	commentAddedBool := strconv.FormatBool(commentAdded)
+	var resp JSONResponse
+	resp.Fields["id"] = string(id)
+	resp.Fields["added"] =  commentAddedBool
+	jsonResp, _ := json.Marshal(resp)
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintln(w, jsonResp)
+}
+
 func main() {
 	initDB()
 	routes := mux.NewRouter()
 	routes.HandleFunc("/api/pages", apiPage).Methods("GET")
 	routes.HandleFunc("/api/pages/{guid:[0-9a-zA\\-]+}", apiPage).Methods("GET")
+	routes.HandleFunc("/api/comments", apiCommentPost).Methods("POST")
 	routes.HandleFunc("/page/{guid:[0-9a-zA\\-]+}", servePage)
 	routes.HandleFunc("/", redirIndex)
 	routes.HandleFunc("/home", serveIndex)
