@@ -22,10 +22,11 @@ const (
 var database *sql.DB
 
 type Page struct {
-	Title   string
+	Title      string
 	RawContent string
-	Content template.HTML
-	Date    string
+	Content    template.HTML
+	Date       string
+	GUID       string
 }
 
 func servePage(w http.ResponseWriter, r *http.Request) {
@@ -35,12 +36,16 @@ func servePage(w http.ResponseWriter, r *http.Request) {
 	err := database.QueryRow("SELECT page_title,page_content,page_date FROM pages WHERE page_guid=?", pageGUID).Scan(&thisPage.Title, &thisPage.RawContent, &thisPage.Date)
 	thisPage.Content = template.HTML(thisPage.RawContent)
 	if err != nil {
-		fmt.Println("Couldn't get page:", pageGUID, err.Error())
+		log.Println("Couldn't get page:", pageGUID, err.Error())
 		http.Error(w, http.StatusText(404), http.StatusNotFound)
 		return
 	}
 	t, _ := template.ParseFiles("templates/blog.html")
 	t.Execute(w, thisPage)
+}
+
+func redirIndex(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/home", http.StatusMovedPermanently)
 }
 
 func initDB() {
@@ -52,11 +57,32 @@ func initDB() {
 	database = db
 }
 
+func serveIndex(w http.ResponseWriter, r *http.Request) {
+	var Pages []Page
+	pages, err := database.Query("SELECT page_title, page_content, page_date, page_guid FROM pages ORDER BY ? DESC", "page_date")
+	if err != nil {
+		log.Println(err.Error())
+		fmt.Fprintln(w, err.Error())
+		return
+	}
+	defer pages.Close()
+	for pages.Next() {
+		var thisPage Page
+		pages.Scan(&thisPage.Title, &thisPage.RawContent, &thisPage.Date, &thisPage.GUID)
+		thisPage.Content = template.HTML(thisPage.RawContent)
+		Pages = append(Pages, thisPage)
+	}
+	t, _ := template.ParseFiles("templates/index.html")
+	t.Execute(w, Pages)
+}
+
 func main() {
 	initDB()
 	router := mux.NewRouter()
-	router.HandleFunc("/pages/{guid:[0-9a-zA\\-]+}", servePage)
+	router.HandleFunc("/page/{guid:[0-9a-zA\\-]+}", servePage)
+	router.HandleFunc("/", redirIndex)
+	router.HandleFunc("/home", serveIndex)
 	http.Handle("/", router)
-	fmt.Println("Listening on port", Port)
+	log.Println("Listening on port", Port)
 	http.ListenAndServe(Port, nil)
 }

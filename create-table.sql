@@ -18,5 +18,8 @@ CREATE TABLE `pages` (
 -- insert 1 row
 INSERT INTO `pages` (`id`, `page_guid`, `page_title`, `page_content`, `page_date`) VALUES (NULL, 'hello-world', 'Hello, World', 'I\'m so glad you found this page!  It\'s been sitting patiently on the Internet for some time, just waiting for a visitor.', CURRENT_TIMESTAMP);
 
--- insert second row`
+-- insert second row
 INSERT INTO `pages` (`id`, `page_guid`, `page_title`, `page_content`, `page_date`) VALUES (2, 'a-new-blog', 'A New Blog', 'I hope you enjoyed the last blog!  Well brace yourself, because my latest blog is even <i>better</i> than the last!', '2015-04-29 02:16:19');
+
+-- insert another row
+INSERT INTO `pages` (`id`, `page_guid`, `page_title`, `page_content`, `page_date`) VALUES (3, 'lorem-ipsum', 'Lorem Ipsum', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam vel dapibus enim. Nulla a accumsan nisi. Cras vel nunc ullamcorper, fringilla justo vel, molestie magna. Suspendisse rhoncus vulputate tortor ac pulvinar. Mauris laoreet viverra semper. Mauris faucibus non nisl ut semper. Vestibulum in tellus sed ligula lacinia pulvinar eget ac nisi. Phasellus vitae ornare velit. Pellentesque et ipsum nibh. Vivamus elementum egestas justo. Nulla non diam et nibh suscipit ultricies. Ut suscipit risus nec libero cursus, at molestie mauris tincidunt. Etiam et orci justo.', '2015-05-06 04:09:45');
