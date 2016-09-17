@@ -109,8 +109,7 @@ func apiPage(w http.ResponseWriter, r *http.Request) {
 func main() {
 	initDB()
 	routes := mux.NewRouter()
-	routes.HandleFunc("/api/pages", apiPage).Methods("GET").Schemes("https")
-	//routes.HandleFunc("/api/pages/{guid:[0-9a-zA\\-]+}", apiPage).Methods("GET").Schemes("https")
+	routes.HandleFunc("/api/pages", apiPage).Methods("GET")
 	routes.HandleFunc("/api/pages/{guid:[0-9a-zA\\-]+}", apiPage).Methods("GET")
 	routes.HandleFunc("/page/{guid:[0-9a-zA\\-]+}", servePage)
 	routes.HandleFunc("/", redirIndex)
@@ -121,6 +120,11 @@ func main() {
 		log.Fatalln("Cannot load certificates:", err.Error())
 	}
 	tlsConfig := tls.Config{Certificates: []tls.Certificate{certificates}}
+	log.Println("TLS Config", tlsConfig)
 	log.Println("Listening on port", Port)
-	tls.Listen("tcp", Port, &tlsConfig)
+	//_, err = tls.Listen("tcp", Port, &tlsConfig)
+	err = http.ListenAndServeTLS(Port, "server.pem", "server.key", nil)
+	if err != nil {
+		log.Fatalln("failed to listen:", err.Error())
+	}
 }
