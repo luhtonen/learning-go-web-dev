@@ -30,12 +30,8 @@ type Page struct {
 }
 
 func (p Page) TruncatedText() template.HTML {
-	chars := 0
-	for i := range p.Content {
-		chars++
-		if chars > 150 {
-			return p.Content[:i] + ` ...`
-		}
+	if len(p.Content) > 150 {
+		return p.Content[:150] + ` ...`
 	}
 	return p.Content
 }
