@@ -29,6 +29,17 @@ type Page struct {
 	GUID       string
 }
 
+func (p Page) TruncatedText() template.HTML {
+	chars := 0
+	for i := range p.Content {
+		chars++
+		if chars > 150 {
+			return p.Content[:i] + ` ...`
+		}
+	}
+	return p.Content
+}
+
 func servePage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pageGUID := vars["guid"]
